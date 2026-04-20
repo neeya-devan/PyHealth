@@ -12,11 +12,16 @@ Optional masks:
     right_mask: [batch_size, seq_len] with 1/True for valid tokens
 """
 
-from typing import Any, Optional
+from __future__ import annotations
+
+from typing import Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from pyhealth.datasets import SampleDataset
+from pyhealth.models import BaseModel
 
 
 class AttentionPooling(nn.Module):
@@ -43,7 +48,7 @@ class AttentionPooling(nn.Module):
         return pooled
 
 
-class EBCL(nn.Module):
+class EBCL(BaseModel):
     """Event-Based Contrastive Learning model for medical time series.
 
     This model uses a shared encoder for left/pre-event and right/post-event windows,
@@ -55,7 +60,7 @@ class EBCL(nn.Module):
 
     def __init__(
         self,
-        dataset: Optional[Any],
+        dataset: Optional[SampleDataset],
         input_dim: int,
         hidden_dim: int = 32,
         projection_dim: int = 32,
@@ -67,7 +72,7 @@ class EBCL(nn.Module):
         classifier_out_dim: int = 0,
         max_seq_len: int = 512,
     ) -> None:
-        super().__init__()
+        super().__init__(dataset=dataset)
 
         if hidden_dim % num_heads != 0:
             raise ValueError(
