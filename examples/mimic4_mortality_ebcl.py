@@ -1,11 +1,11 @@
-"""Example ablation script for EBCL on synthetic MIMIC-style data.
+"""Example ablation script for EBCL on synthetic event-window data.
 
 This script demonstrates how to:
 1. instantiate EBCL,
 2. run a simple training loop,
 3. compare a few hyperparameter settings.
 
-It uses synthetic data so it is lightweight and runnable without protected datasets.
+It uses synthetic data only so it remains runnable on lightweight environments.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from pyhealth.models.ebcl import EBCL
 
 
 def set_seed(seed: int = 42) -> None:
+    """Set seeds for reproducibility."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -50,6 +51,7 @@ class SyntheticEventDataset(Dataset):
 
 
 def collate_fn(batch):
+    """Collate synthetic samples into a batch."""
     return {
         "left_x": torch.stack([x["left_x"] for x in batch], dim=0),
         "right_x": torch.stack([x["right_x"] for x in batch], dim=0),
@@ -64,7 +66,8 @@ def train_one_setting(
     hidden_dim: int = 32,
     epochs: int = 5,
     lr: float = 1e-3,
-):
+) -> float:
+    """Train EBCL for one hyperparameter setting."""
     dataset = SyntheticEventDataset(num_samples=128, seq_len=16, input_dim=16)
     loader = DataLoader(dataset, batch_size=16, shuffle=True, collate_fn=collate_fn)
 
@@ -105,7 +108,8 @@ def train_one_setting(
     return history[-1]
 
 
-def main():
+def main() -> None:
+    """Run the synthetic EBCL ablation study."""
     set_seed(42)
 
     settings = [
@@ -122,7 +126,9 @@ def main():
         )
         results.append((cfg, final_loss))
 
-    print("\n=== Ablation Summary ===")
+    results = sorted(results, key=lambda x: x[1])
+
+    print("\n=== Ablation Summary (lower is better) ===")
     for cfg, final_loss in results:
         print(
             f"temperature={cfg['temperature']}, "
